@@ -65,6 +65,8 @@ function evaluate(s) {
             portionResult = +portionArr[0] + +portionArr[2];
         str = str.replace(portion, portionResult.toString());
     }
+    displayValue = str;
+    disp();
     result = +str;
     
     return result;
@@ -78,8 +80,21 @@ let displayValue = '';
 buttons.forEach(button => {
     button.addEventListener('click', () => {
         let value = button.value;
-        if (value !== '=') {
+        if (value == '/' || value == 'x' || value == '-' || value == '+') {
+            displayValue += ` ${value} `
+            disp();
+        }
+        else if (value !== '=' && value !== 'clear') {
             displayValue += value;
+            disp();
+        }
+        else if (value === 'clear') {
+            displayValue = '';
+            disp();
+        }
+        else {
+            let result = evaluate(displayValue);
+            displayValue = result.toString();
             disp();
         }
     });
