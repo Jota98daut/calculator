@@ -1,102 +1,73 @@
-function add(a, b) {
-    return a + b;
-}
-
-function subtract(a, b) {
-    return a - b;
-}
-
-function multiply(a, b) {
-    return a * b;
-}
-
-function divide (a, b) {
-    return a / b;
-}
-
-// Return the result of the specified operation
-function operate(operator, a, b) {
-    return (operator == 'add') ? add(a, b) :
-           (operator == 'subtract') ? subtract(a, b) :
-           (operator == 'multiply') ? multiply(a, b) :
-           (operator == 'divide') ? divide(a, b) :
-           0;
-    
-}
-
-// Display the given values
-function disp() {
-    display.textContent = displayValue;
-}
-
-function evaluate(s) {
-    let str = s;
-    let operationsArr = str.split(' ');
-    let result, portion, portionArr, portionResult, xIndex;
-    while(str.includes('(')) {
-        // Get the portion of the string in parentheses and evaluate it
-        portion = s.slice(s.indexOf('(') + 1, s.indexOf(')'));
-        portionResult = evaluate(portion);
-        // Replace portion in parentheses with it's result
-        str = str.replace(`(${portion})`, portionResult.toString());
-    }
-    while (str.includes('x') || str.includes('/')) {
-        operationsArr = str.split(' ');
-        xIndex = operationsArr.findIndex((item) => item == 'x' || item == '/');
-        portionArr = [];
-        portionArr[0] = operationsArr[xIndex-1];
-        portionArr[1] = operationsArr[xIndex];
-        portionArr[2] = operationsArr[xIndex+1];
-        portion = portionArr.toString().replace(/,/g, ' ');
-        if (portionArr[1] == 'x')
-            portionResult = +portionArr[0] * +portionArr[2];
-        else
-            portionResult = +portionArr[0] / +portionArr[2];
-        str = str.replace(portion, portionResult.toString());
-    }
-
-    while (str.includes('+') || str.includes('-')) {
-        operationsArr = str.split(' ');
-        portionArr = [operationsArr[0],operationsArr[1],operationsArr[2]]
-        portion = portionArr.toString().replace(/,/g, ' ');
-        if (portionArr[1] == '+')
-            portionResult = +portionArr[0] + +portionArr[2];
-        else
-            portionResult = +portionArr[0] + +portionArr[2];
-        str = str.replace(portion, portionResult.toString());
-    }
-    displayValue = str;
-    disp();
-    result = +str;
-    
-    return result;
-}
-
 const buttons = document.querySelectorAll('button');
 const display = document.querySelector('.display');
 
-let displayValue = '';
+let result, displayValue, isOp;
+let isResolved = false;
+
+// What to show on the display
+function populateDisplay(s, btnType) {
+    // If the current value is a result from a previous operation, 
+    // clean the screen
+    if (isResolved == true) {
+        if (btnType != 'operation') {
+            display.textContent = '';
+        }
+        isResolved = false;
+    }
+
+    if(s == 'clear') 
+        display.textContent = '';
+    else if (s == '/' || s == 'x' || s == '-' || s == '+')
+        display.textContent += ` ${s} `;
+    else if (s != '=')
+        display.textContent += s;
+    return display.textContent;
+}
+
+// Resolve the given operation (taken as a string)
+function resolve(opString) {
+    let helper = opString;
+    let opArray = [];
+    let result, partialResult, opIndex;
+    // While there are operations left
+    while (helper.includes('x') || helper.includes('/') || helper.includes('+') || helper.includes('-')) {
+        opArray = helper.split(' ');
+        if (helper.includes('x')) {
+            opIndex = opArray.indexOf('x');
+            partialResult = +opArray[opIndex-1] * +opArray[opIndex+1];
+            helper = helper.replace(`${opArray[opIndex-1]} x ${opArray[opIndex+1]}`, partialResult.toString());
+        }
+        else if (helper.includes('/')) {
+            opIndex = opArray.indexOf('/');
+            partialResult = +opArray[opIndex-1] / +opArray[opIndex+1];
+            helper = helper.replace(`${opArray[opIndex-1]} / ${opArray[opIndex+1]}`, partialResult.toString());
+        }
+        else if (helper.includes(display.textContent = '+')) {
+            opIndex = opArray.indexOf('+');
+            partialResult = +opArray[opIndex-1] + +opArray[opIndex+1];
+            console.log('To replace: ' + `${opIndex-1} + ${opIndex+1}` + 'from ' + helper);
+            helper = helper.replace(`${opArray[opIndex-1]} + ${opArray[opIndex+1]}`, partialResult.toString());
+            console.log(helper);
+        }
+        else if (helper.includes('-')) {
+            opIndex = opArray.indexOf('-');
+            partialResult = +opArray[opIndex-1] - +opArray[opIndex+1];
+            helper = helper.replace(`${opArray[opIndex-1]} - ${opArray[opIndex+1]}`, partialResult.toString());
+        }
+    }
+    result = partialResult;
+    return result;
+}
 
 buttons.forEach(button => {
     button.addEventListener('click', () => {
-        let value = button.value;
-        if (value == '/' || value == 'x' || value == '-' || value == '+') {
-            displayValue += ` ${value} `
-            disp();
-        }
-        else if (value !== '=' && value !== 'clear') {
-            displayValue += value;
-            disp();
-        }
-        else if (value === 'clear') {
-            displayValue = '';
-            disp();
+        isOp = button.classList[1];
+        if (button.value != '=') {
+            displayValue = populateDisplay(button.value, isOp);
         }
         else {
-            let result = evaluate(displayValue);
-            displayValue = result.toString();
-            disp();
+            display.textContent = resolve(displayValue).toString();
+            isResolved = true;
         }
     });
 });
-
